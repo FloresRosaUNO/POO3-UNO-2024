@@ -1,0 +1,60 @@
+public class Buffer {
+	 private int tamanio = 0;
+	 private int cantidad = 0;
+	 protected Mensaje[] buffer = null;
+	 protected int poner = 0, sacar = 0;
+	 
+	 public Buffer(int tamanio) {
+		 this.tamanio = tamanio;
+		 buffer = new Mensaje[tamanio];
+		 }
+	 
+	 //public synchronized void insertar (double valor){;}
+	 
+	 //public synchronized double extraer() {;}
+ 
+public synchronized Mensaje extraer(String destin) {
+	 Mensaje valor= null;
+	 while (cantidad == 0) //condición de buffer vacío
+	 try {  System.out.println("Entro wait -vacio");
+	 wait(); } 
+	catch (InterruptedException e) {
+	 System.err.println("wait interrumpido"); }
+	 for(Mensaje e : buffer) {
+		 if(destin.equals(e.destinatario)) {
+			 valor = e;
+			 valor = buffer[sacar];
+			 sacar = (sacar + 1) % tamanio;
+			 cantidad--;
+			 if(cantidad ==tamanio-1) // si estaba lleno 		 			
+				 notify();
+			 return e;
+		 }
+	 }
+	
+	 return valor; //extracción OK
+	 }
+public synchronized void insertar(Mensaje valor)
+{
+ while (cantidad == tamanio) //condición de buffer
+ try {  System.out.println("Entro wait –buffer lleno");
+ wait(); }
+ catch (InterruptedException e) {
+ 
+ System.err.println("wait interrumpido"); }
+
+ buffer[poner] = valor;
+ poner = (poner + 1) % tamanio;
+ cantidad++;
+ if(cantidad ==1) // s estaba vacio
+	notify(); //inserción OK
+
+
+}
+
+
+//Lab4+-
+
+
+}
+
