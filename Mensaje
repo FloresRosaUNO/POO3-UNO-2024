@@ -1,0 +1,18 @@
+public class Mensaje {
+	String destinatario;
+	String remitente;
+	String contenido;
+	
+	public Mensaje(String desti, String conte) {
+		this.destinatario=desti;
+		this.contenido=conte;
+		this.remitente="todaviaNoSavemos";
+	}
+
+	@Override
+	public String toString() {
+		return "Mensaje [destinatario=" + destinatario + "\n contenido=" + contenido + "]";
+	}
+	
+
+}
