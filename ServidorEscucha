@@ -1,0 +1,71 @@
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ServidorEscucha {
+	Socket elCliente;
+	DataOutputStream salida;
+	BufferedReader entrada;
+	String leido;
+	String mensajeCliente;
+	ServidorEscucha(Socket cliente){elCliente=cliente;}
+	public void run (){
+		 	Buffer monitor = new Buffer (10);
+		 	System.out.print("\n Entro + puerto=" + elCliente.getPort() + "ip=" + elCliente.getRemoteSocketAddress()); 
+			   try
+			   { salida = new DataOutputStream(elCliente.getOutputStream());
+			   salida.writeBytes("\nHola, ingrese 01 para enviar mensaje o 02 para ver mensaje(s) \n");  Thread.sleep(5000);
+			   while(true)
+				   { entrada = new BufferedReader(new InputStreamReader(elCliente.getInputStream()));
+				   System.out.print("\nEsperando");
+				   leido=entrada.readLine();
+				   System.out.print("\nLeido" + leido + "\n");
+				   if(leido.equals("01")){
+					   System.out.print("\nIngrese mensaje que desea enviar: "); 
+					   salida.writeBytes("\nIngrese destinatario y separado por '-' el mensaje : ");
+					   entrada = new BufferedReader(new InputStreamReader(elCliente.getInputStream()));
+					   mensajeCliente=entrada.readLine();
+					   monitor.insertar(crearMensaje(mensajeCliente));
+				   }else if(leido.equals("02")) {
+					   salida.writeBytes("\nIngrese destinatario : ");
+					   entrada = new BufferedReader(new InputStreamReader(elCliente.getInputStream()));
+					   String ingresado = entrada.readLine();
+					   salida.writeBytes("\nRevisando si existen mensajes para "+ ingresado);
+				
+					   salida.writeBytes(" "+monitor.extraer(ingresado).toString());
+					   monitor.extraer(ingresado);
+				   }
+				   salida.writeBytes("\nLeido" + leido + "\n");   }
+			   
+			   } catch(Exception e)	   {System.out.println( e.getMessage() );}
+		   }
+	
+	public Mensaje crearMensaje(String linea) {
+		String[] partes=linea.split("-");
+		Mensaje texto =new Mensaje(partes[0], partes[1]);
+		return texto;
+	}
+	public static void main(String[ ] args){
+		
+	int PUERTO=61; 	System.out.print("\n Arranca Servidor");
+	ServerSocket socketServidor=null;
+	try
+	    {socketServidor = new ServerSocket(PUERTO);}
+    catch(Exception e)
+    	{System.out.println( e.getMessage() );}
+               while (true)
+                 {Socket cliente=null;
+    	 try    {cliente = socketServidor.accept();}
+                 catch(Exception e) 	{System.out.println( e.getMessage() );}
+    	ServidorEscucha nuevoCliente=new ServidorEscucha( cliente);
+	Thread hilo = new Thread((Runnable) nuevoCliente);  
+	hilo.start();  } 	
+    //socketServidor.close();	
+
+	}
+	
+}
+
+
