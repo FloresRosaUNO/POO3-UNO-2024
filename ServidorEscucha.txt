@@ -1,0 +1,148 @@
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class ServidorEscucha {
+	Socket elCliente;
+	DataOutputStream salida;
+	BufferedReader entrada;
+	String leido;
+	String mensajeCliente;
+	ServidorEscucha(Socket cliente){elCliente=cliente;}
+	public void run (){
+		 	Buffer monitor = new Buffer (10);
+		 	System.out.print("\n Entro + puerto=" + elCliente.getPort() + "ip=" + elCliente.getRemoteSocketAddress()); 
+			   try
+			   { salida = new DataOutputStream(elCliente.getOutputStream());
+			   salida.writeBytes("\nHola, ingrese 01 para enviar mensaje o 02 para ver mensaje(s) \n");  Thread.sleep(5000);
+			   while(true)
+				   { entrada = new BufferedReader(new InputStreamReader(elCliente.getInputStream()));
+				   System.out.print("\nEsperando");
+				   leido=entrada.readLine();
+				   System.out.print("\nLeido" + leido + "\n");
+				   if(leido.equals("01")){
+					   System.out.print("\nIngrese mensaje que desea enviar: "); 
+					   salida.writeBytes("\nIngrese destinatario y separado por '-' el mensaje : ");
+					   entrada = new BufferedReader(new InputStreamReader(elCliente.getInputStream()));
+					   mensajeCliente=entrada.readLine();
+					   monitor.insertar(crearMensaje(mensajeCliente));
+				   }else if(leido.equals("02")) {
+					   salida.writeBytes("\nIngrese destinatario : ");
+					   entrada = new BufferedReader(new InputStreamReader(elCliente.getInputStream()));
+					   String ingresado = entrada.readLine();
+					   salida.writeBytes("\nRevisando si existen mensajes para "+ ingresado);
+				
+					   salida.writeBytes(" "+monitor.extraer(ingresado).toString());
+					   monitor.extraer(ingresado);
+				   }
+				   salida.writeBytes("\nLeido" + leido + "\n");   }
+			   
+			   } catch(Exception e)	   {System.out.println( e.getMessage() );}
+		   }
+	
+	public Mensaje crearMensaje(String linea) {
+		String[] partes=linea.split("-");
+		Mensaje texto =new Mensaje(partes[0], partes[1]);
+		return texto;
+	}
+	public static void main(String[ ] args){
+		
+	int PUERTO=61; 	System.out.print("\n Arranca Servidor");
+	ServerSocket socketServidor=null;
+	try
+	    {socketServidor = new ServerSocket(PUERTO);}
+    catch(Exception e)
+    	{System.out.println( e.getMessage() );}
+               while (true)
+                 {Socket cliente=null;
+    	 try    {cliente = socketServidor.accept();}
+                 catch(Exception e) 	{System.out.println( e.getMessage() );}
+    	ServidorEscucha nuevoCliente=new ServidorEscucha( cliente);
+	Thread hilo = new Thread((Runnable) nuevoCliente);  
+	hilo.start();  } 	
+    //socketServidor.close();	
+
+	}
+	
+}
+
+public class Buffer {
+	 private int tamanio = 0;
+	 private int cantidad = 0;
+	 protected Mensaje[] buffer = null;
+	 protected int poner = 0, sacar = 0;
+	 
+	 public Buffer(int tamanio) {
+		 this.tamanio = tamanio;
+		 buffer = new Mensaje[tamanio];
+		 }
+	 
+	 //public synchronized void insertar (double valor){;}
+	 
+	 //public synchronized double extraer() {;}
+ 
+public synchronized Mensaje extraer(String destin) {
+	 Mensaje valor= null;
+	 while (cantidad == 0) //condición de buffer vacío
+	 try {  System.out.println("Entro wait -vacio");
+	 wait(); } 
+	catch (InterruptedException e) {
+	 System.err.println("wait interrumpido"); }
+	 for(Mensaje e : buffer) {
+		 if(destin.equals(e.destinatario)) {
+			 valor = e;
+			 valor = buffer[sacar];
+			 sacar = (sacar + 1) % tamanio;
+			 cantidad--;
+			 if(cantidad ==tamanio-1) // si estaba lleno 		 			
+				 notify();
+			 return e;
+		 }
+	 }
+	
+	 return valor; //extracción OK
+	 }
+public synchronized void insertar(Mensaje valor)
+{
+ while (cantidad == tamanio) //condición de buffer
+ try {  System.out.println("Entro wait –buffer lleno");
+ wait(); }
+ catch (InterruptedException e) {
+ 
+ System.err.println("wait interrumpido"); }
+
+ buffer[poner] = valor;
+ poner = (poner + 1) % tamanio;
+ cantidad++;
+ if(cantidad ==1) // s estaba vacio
+	notify(); //inserción OK
+
+
+}
+
+
+//Lab4+-
+
+
+}
+
+public class Mensaje {
+	String destinatario;
+	String remitente;
+	String contenido;
+	
+	public Mensaje(String desti, String conte) {
+		this.destinatario=desti;
+		this.contenido=conte;
+		this.remitente="todaviaNoSavemos";
+	}
+
+	@Override
+	public String toString() {
+		return "Mensaje [destinatario=" + destinatario + "\n contenido=" + contenido + "]";
+	}
+	
+
+}
